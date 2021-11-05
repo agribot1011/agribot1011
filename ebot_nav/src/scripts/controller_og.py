@@ -56,24 +56,18 @@ def move(publisher, speed, vel_msg):
     publisher.publish(vel_msg)
 
 
-
 def rotate(publisher, vel_msg, angular_speed_degree, relative_angle_degree, clockwise):
-    angular_speed = math.radians(abs(angular_speed_degree))
-    
+    angular_speed = math.radians(abs(angular_speed_degree))  
     if clockwise:
         vel_msg.angular.z = -1 * abs(angular_speed)
     else:
         vel_msg.angular.z = abs(angular_speed)
-
     loop_rate = rospy.Rate(10)    
     t0 = rospy.Time.now().to_sec()
     yaw0 = yaw
-
     while not rospy.is_shutdown():
         # rospy.loginfo("Turtlesim rotates")
         publisher.publish(vel_msg)
-
-
         t1 = rospy.Time.now().to_sec()
         desired_angle_degree = (t1 - t0) * angular_speed_degree
         current_angle_degree = math.degrees(yaw - yaw0) 
@@ -104,7 +98,6 @@ def home(vel_msg, publisher):
     rotate(publisher, vel_msg, 30, 90, True)
 
 
-
 def lane_travel(lin, vel_msg, publisher):
     # global regions
     # edge = regions['fleft']
@@ -119,7 +112,6 @@ def lane_travel(lin, vel_msg, publisher):
 if __name__ == '__main__':
     try:
         rospy.init_node('ebot_controller')
-
         velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         laser = rospy.Subscriber('/ebot/laser/scan', LaserScan, laser_callback)
         odom = rospy.Subscriber('/odom', Odometry, odom_callback)
