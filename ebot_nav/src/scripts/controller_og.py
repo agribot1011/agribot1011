@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 #hello
+
 import math
 import rospy
 from geometry_msgs.msg import Twist
@@ -17,7 +18,7 @@ def odom_callback(data):
     z = data.pose.pose.orientation.z
     w = data.pose.pose.orientation.w
     yaw = euler_from_quaternion([x,y,z,w])[2]
-    rospy.loginfo(math.degrees(yaw))
+    # rospy.loginfo(math.degrees(yaw))
 
 
 def laser_callback(msg):
@@ -29,7 +30,7 @@ def laser_callback(msg):
         'fleft':   min(min(msg.ranges[432:575]),msg.range_max) ,
         'bleft':   min(min(msg.ranges[576:719]),msg.range_max) ,
     }
-    # print(edge)
+    # rospy.loginfo(regions['front'])
 
 
 def control_loop(publisher):
@@ -39,30 +40,15 @@ def control_loop(publisher):
     velocity_msg.angular.z = 0
     publisher.publish(velocity_msg)
     rate.sleep()
-    # peak = regions['bleft']
-    # diff = {
-    #     'last': regions['fleft'],
-    #     'current': 0
-    # }
-
     while not rospy.is_shutdown():
 
         #
         # Your algorithm to complete the obstacle course
         #
 
-        # diff = regions['bleft'] - peak
-        # diff['current'] = regions['fleft']
-        # edge = diff['current'] - diff['last']
-
-        
-        # rospy.loginfo(diff)
-
-        # diff['last'] = diff['current']
-        # peak = regions['bleft']
         home(velocity_msg, publisher)
         lane_travel(0.75, velocity_msg, publisher)
-        # print("Controller message pushed at {}".format(rospy.get_time()))
+        # rate.sleep()
 
 
 def move(publisher, speed, vel_msg):    
@@ -79,18 +65,23 @@ def rotate(publisher, vel_msg, angular_speed_degree, relative_angle_degree, cloc
     else:
         vel_msg.angular.z = abs(angular_speed)
 
-    loop_rate = rospy.Rate(10) # we publish the velocity at 10 Hz (10 times a second)    
-    # t0 = rospy.Time.now().to_sec()
+    loop_rate = rospy.Rate(10)    
+    t0 = rospy.Time.now().to_sec()
+    yaw0 = yaw
 
     while not rospy.is_shutdown():
         # rospy.loginfo("Turtlesim rotates")
         publisher.publish(vel_msg)
 
-        # t1 = rospy.Time.now().to_sec()
-        current_angle_degree = math.degrees(yaw) 
+
+        t1 = rospy.Time.now().to_sec()
+        desired_angle_degree = (t1 - t0) * angular_speed_degree
+        current_angle_degree = math.degrees(yaw - yaw0) 
+        error = desired_angle_degree - current_angle_degree
+        rospy.loginfo(error)
         loop_rate.sleep()     
 
-        if current_angle_degree >= relative_angle_degree:
+        if desired_angle_degree >= relative_angle_degree:
             rospy.loginfo("reached")
             break
 
@@ -100,13 +91,18 @@ def rotate(publisher, vel_msg, angular_speed_degree, relative_angle_degree, cloc
 
 
 def home(vel_msg, publisher):
-    rotate(publisher, vel_msg, 30, 180, False)
-    while(regions['front'] >= 1):
-        move(publisher, 0.7, vel_msg)
+    rotate(publisher, vel_msg, 30, 178, False)
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        move(publisher, 0.3, vel_msg)
+        rate.sleep()
+        if(regions['front'] <= 1.5):
+            vel_msg.linear.x = 0
+            publisher.publish(vel_msg)
+            rospy.loginfo("reached2")
+            break
     rotate(publisher, vel_msg, 30, 90, True)
 
-
-    
 
 
 def lane_travel(lin, vel_msg, publisher):
@@ -125,8 +121,8 @@ if __name__ == '__main__':
         rospy.init_node('ebot_controller')
 
         velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        laser_sub = rospy.Subscriber('/ebot/laser/scan', LaserScan, laser_callback)
-        odom_sub = rospy.Subscriber('/odom', Odometry, odom_callback)
+        laser = rospy.Subscriber('/ebot/laser/scan', LaserScan, laser_callback)
+        odom = rospy.Subscriber('/odom', Odometry, odom_callback)
         control_loop(velocity_publisher)
     except rospy.ROSInterruptException:
         pass
