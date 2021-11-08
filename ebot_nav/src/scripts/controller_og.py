@@ -15,8 +15,8 @@ yaw = 0
 
 def odom_callback(data):
     global yaw
-    x  = data.pose.pose.orientation.x
-    y  = data.pose.pose.orientation.y
+    x = data.pose.pose.orientation.x
+    y = data.pose.pose.orientation.y
     z = data.pose.pose.orientation.z
     w = data.pose.pose.orientation.w
     yaw = euler_from_quaternion([x,y,z,w])[2]
@@ -26,11 +26,11 @@ def odom_callback(data):
 def laser_callback(msg):
     global regions
     regions = {
-        'bright':  min(min(msg.ranges[0:143]),msg.range_max) ,
-        'fright':  min(min(msg.ranges[144:287]),msg.range_max) ,
-        'front':   min(min(msg.ranges[288:431]),msg.range_max) ,
-        'fleft':   min(min(msg.ranges[432:575]),msg.range_max) ,
-        'bleft':   min(min(msg.ranges[576:719]),msg.range_max) ,
+        'bright':  min(min(msg.ranges[0:143]), msg.range_max) ,
+        'fright':  min(min(msg.ranges[144:287]), msg.range_max) ,
+        'front':   min(min(msg.ranges[288:431]), msg.range_max) ,
+        'fleft':   min(min(msg.ranges[432:575]), msg.range_max) ,
+        'bleft':   min(min(msg.ranges[576:719]), msg.range_max) ,
     }
     # rospy.loginfo(regions['front'])
 
@@ -54,19 +54,27 @@ def move(publisher, speed, vel_msg):
 
 
 def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
-    kP = 1.15
+    kP = 0.8
+    error_prior = 0
+    integral_prior = 0
+    kI = 0.005
+    t0 = rospy.Time.now().to_sec()
     loop_rate = rospy.Rate(10)    
-    while not rospy.is_shutdown():
+    while not rospy.is_shutdown():        
         target_rad = math.radians(relative_angle_degree)
+        t1 = rospy.Time.now().to_sec()
+        error = target_rad - yaw
+        integral = integral_prior + abs(error) * (t1-t0)
         if clockwise:
-            vel_msg.angular.z = -kP * abs(target_rad - yaw)
+            vel_msg.angular.z = -(kP * abs(error) + kI * integral)
         else:
-            vel_msg.angular.z = kP * abs(target_rad - yaw)
+            vel_msg.angular.z = kP * abs(error) + kI * integral
 
         publisher.publish(vel_msg)
         rospy.loginfo(target_rad - yaw)
+        integral_prior = integral
         loop_rate.sleep()
-        if abs(target_rad - yaw) <= 0.08:
+        if abs(error) <= 0.0075:
             rospy.loginfo("reached")
             break
     vel_msg.angular.z = 0
