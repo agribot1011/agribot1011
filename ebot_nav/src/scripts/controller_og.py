@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-#hello
+#note: (bleft - bright) can tell us which specific lane are we exiting
+# +ve: rightlane, -ve: leftlane, zero: middlelane
+#it can also tell us which lane are we about to enter
 
 import math
 import rospy
@@ -41,14 +43,9 @@ def control_loop(publisher):
     publisher.publish(velocity_msg)
     rate.sleep()
     while not rospy.is_shutdown():
-
-        #
-        # Your algorithm to complete the obstacle course
-        #
-
         home(velocity_msg, publisher)
         lane_travel(0.75, velocity_msg, publisher)
-        # rate.sleep()
+        rate.sleep()
 
 
 def move(publisher, speed, vel_msg):    
@@ -56,36 +53,28 @@ def move(publisher, speed, vel_msg):
     publisher.publish(vel_msg)
 
 
-def rotate(publisher, vel_msg, angular_speed_degree, relative_angle_degree, clockwise):
-    angular_speed = math.radians(abs(angular_speed_degree))  
-    if clockwise:
-        vel_msg.angular.z = -1 * abs(angular_speed)
-    else:
-        vel_msg.angular.z = abs(angular_speed)
+def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
+    kP = 1.15
     loop_rate = rospy.Rate(10)    
-    t0 = rospy.Time.now().to_sec()
-    yaw0 = yaw
     while not rospy.is_shutdown():
-        # rospy.loginfo("Turtlesim rotates")
-        publisher.publish(vel_msg)
-        t1 = rospy.Time.now().to_sec()
-        desired_angle_degree = (t1 - t0) * angular_speed_degree
-        current_angle_degree = math.degrees(yaw - yaw0) 
-        error = desired_angle_degree - current_angle_degree
-        rospy.loginfo(error)
-        loop_rate.sleep()     
+        target_rad = math.radians(relative_angle_degree)
+        if clockwise:
+            vel_msg.angular.z = -kP * abs(target_rad - yaw)
+        else:
+            vel_msg.angular.z = kP * abs(target_rad - yaw)
 
-        if desired_angle_degree >= relative_angle_degree:
+        publisher.publish(vel_msg)
+        rospy.loginfo(target_rad - yaw)
+        loop_rate.sleep()
+        if abs(target_rad - yaw) <= 0.08:
             rospy.loginfo("reached")
             break
-
-    #finally, stop the robot when the distance is moved
     vel_msg.angular.z = 0
     publisher.publish(vel_msg)
 
 
 def home(vel_msg, publisher):
-    rotate(publisher, vel_msg, 30, 178, False)
+    rotate(publisher, vel_msg, 180, False)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         move(publisher, 0.3, vel_msg)
@@ -95,18 +84,12 @@ def home(vel_msg, publisher):
             publisher.publish(vel_msg)
             rospy.loginfo("reached2")
             break
-    rotate(publisher, vel_msg, 30, 90, True)
+    rotate(publisher, vel_msg, 90, True)
 
 
 def lane_travel(lin, vel_msg, publisher):
-    # global regions
-    # edge = regions['fleft']
-    # edge = edge - regions['fleft']
-    vel_msg.linear.x = lin
-    vel_msg.angular.z = 0
-
     while not rospy.is_shutdown():
-        publisher.publish(vel_msg)
+        move(publisher, lin, vel_msg)
 
 
 if __name__ == '__main__':
