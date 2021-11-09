@@ -54,10 +54,10 @@ def move(publisher, speed, vel_msg):
 
 
 def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
-    kP = 0.8
+    kP = 0.85
     error_prior = 0
     integral_prior = 0
-    kI = 0.005
+    kI = 0.006
     t0 = rospy.Time.now().to_sec()
     loop_rate = rospy.Rate(10)    
     while not rospy.is_shutdown():        
