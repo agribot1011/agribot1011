@@ -54,27 +54,31 @@ def move(publisher, speed, vel_msg):
 
 
 def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
-    kP = 0.85
+    kP = 0.8
     error_prior = 0
     integral_prior = 0
     kI = 0.006
+    kD = 0.035
     t0 = rospy.Time.now().to_sec()
-    loop_rate = rospy.Rate(10)    
+    loop_rate = rospy.Rate(10)
+    loop_rate.sleep()    
     while not rospy.is_shutdown():        
         target_rad = math.radians(relative_angle_degree)
-        t1 = rospy.Time.now().to_sec()
         error = target_rad - yaw
+        
+        t1 = rospy.Time.now().to_sec()
         integral = integral_prior + abs(error) * (t1-t0)
+        derivative = (abs(error) - abs(error_prior))/(t1-t0)
         if clockwise:
-            vel_msg.angular.z = -(kP * abs(error) + kI * integral)
+            vel_msg.angular.z = -(kP * abs(error) + kI * integral + kD * derivative)
         else:
-            vel_msg.angular.z = kP * abs(error) + kI * integral
-
+            vel_msg.angular.z = kP * abs(error) + kI * integral + kD * derivative
         publisher.publish(vel_msg)
         rospy.loginfo(target_rad - yaw)
         integral_prior = integral
+        error_prior = error
         loop_rate.sleep()
-        if abs(error) <= 0.0075:
+        if abs(error) <= 0.005:
             rospy.loginfo("reached")
             break
     vel_msg.angular.z = 0
@@ -85,7 +89,7 @@ def home(vel_msg, publisher):
     rotate(publisher, vel_msg, 180, False)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        move(publisher, 0.3, vel_msg)
+        move(publisher, 0.5, vel_msg)
         rate.sleep()
         if(regions['front'] <= 1.5):
             vel_msg.linear.x = 0
