@@ -26,26 +26,34 @@ def odom_callback(data):
 def laser_callback(msg):
     global regions
     regions = {
-        'bright':  min(min(msg.ranges[0:143]), msg.range_max) ,
-        'fright':  min(min(msg.ranges[144:287]), msg.range_max) ,
+        'bright_1':  min(min(msg.ranges[0:3]), msg.range_max) ,
+        'bright_2':  min(min(msg.ranges[45:143]), msg.range_max) ,
+
+        'fright_1':  min(min(msg.ranges[144:215]), msg.range_max) ,
+        'fright_2':  min(min(msg.ranges[216:287]), msg.range_max) ,
+
         'front':   min(min(msg.ranges[288:431]), msg.range_max) ,
-        'fleft':   min(min(msg.ranges[432:575]), msg.range_max) ,
-        'bleft':   min(min(msg.ranges[576:719]), msg.range_max) ,
+
+        'fleft_2':   min(min(msg.ranges[432:503]), msg.range_max) ,
+        'fleft_1':   min(min(msg.ranges[504:575]), msg.range_max) ,
+
+        'bleft_2':   min(min(msg.ranges[576:674]), msg.range_max) ,
+        'bleft_1':   min(min(msg.ranges[716:719]), msg.range_max) ,
     }
-    # rospy.loginfo(regions['front'])
+    # rospy.loginfo(regions['bleft_1'] - regions['bright_1'])
 
 
 def control_loop(publisher):
-    rate = rospy.Rate(20)
+    rate = rospy.Rate(10)
     velocity_msg = Twist()
     velocity_msg.linear.x = 0
     velocity_msg.angular.z = 0
     publisher.publish(velocity_msg)
     rate.sleep()
-    while not rospy.is_shutdown():
-        home(velocity_msg, publisher)
-        lane_travel(0.75, velocity_msg, publisher)
-        rate.sleep()
+    # while not rospy.is_shutdown():
+    home(velocity_msg, publisher)
+    lane_travel(0.5, velocity_msg, publisher)
+    # rate.sleep()
 
 
 def move(publisher, speed, vel_msg):    
@@ -57,8 +65,8 @@ def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
     kP = 0.8
     error_prior = 0
     integral_prior = 0
-    kI = 0.006
-    kD = 0.035
+    kI = 0.0045
+    kD = 0
     t0 = rospy.Time.now().to_sec()
     loop_rate = rospy.Rate(10)
     loop_rate.sleep()    
@@ -68,17 +76,17 @@ def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
         
         t1 = rospy.Time.now().to_sec()
         integral = integral_prior + abs(error) * (t1-t0)
-        derivative = (abs(error) - abs(error_prior))/(t1-t0)
+        derivative = (error - error_prior)/(t1-t0)
         if clockwise:
             vel_msg.angular.z = -(kP * abs(error) + kI * integral + kD * derivative)
         else:
             vel_msg.angular.z = kP * abs(error) + kI * integral + kD * derivative
         publisher.publish(vel_msg)
-        rospy.loginfo(target_rad - yaw)
+        # rospy.loginfo(target_rad - yaw)
         integral_prior = integral
         error_prior = error
         loop_rate.sleep()
-        if abs(error) <= 0.005:
+        if abs(error) <= 0.01:
             rospy.loginfo("reached")
             break
     vel_msg.angular.z = 0
@@ -100,8 +108,20 @@ def home(vel_msg, publisher):
 
 
 def lane_travel(lin, vel_msg, publisher):
+    count = 0
+    move(publisher, lin, vel_msg)
+    rospy.Rate(1).sleep()
     while not rospy.is_shutdown():
         move(publisher, lin, vel_msg)
+        if(regions['bleft_1'] - regions['bright_1'] < 0):
+            count = count + 1
+            rospy.loginfo(count)
+            rospy.Rate(1).sleep()
+            if(count == 11):
+                rospy.loginfo("left lane exit")
+                vel_msg.linear.x = 0
+                publisher.publish(vel_msg)
+                break
 
 
 if __name__ == '__main__':
