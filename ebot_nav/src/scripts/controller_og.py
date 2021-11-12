@@ -12,6 +12,11 @@ from tf.transformations import euler_from_quaternion
 
 regions = {}
 yaw = 0
+current_lane = {  
+    'left_lane' : False ,              
+    'middle_lane' : False ,
+    'right_lane' :  False,
+}
 
 def odom_callback(data):
     global yaw
@@ -32,7 +37,7 @@ def laser_callback(msg):
         'fright_1':  min(min(msg.ranges[144:215]), msg.range_max) ,
         'fright_2':  min(min(msg.ranges[216:287]), msg.range_max) ,
 
-        'front':   min(min(msg.ranges[288:431]), msg.range_max) ,
+        'front':   msg.ranges[359],
 
         'fleft_2':   min(min(msg.ranges[432:503]), msg.range_max) ,
         'fleft_1':   min(min(msg.ranges[504:575]), msg.range_max) ,
@@ -40,7 +45,7 @@ def laser_callback(msg):
         'bleft_2':   min(min(msg.ranges[576:674]), msg.range_max) ,
         'bleft_1':   min(min(msg.ranges[716:719]), msg.range_max) ,
     }
-    # rospy.loginfo(regions['bleft_1'] - regions['bright_1'])
+    rospy.loginfo(regions['front'])
 
 
 def control_loop(publisher):
@@ -53,6 +58,7 @@ def control_loop(publisher):
     # while not rospy.is_shutdown():
     home(velocity_msg, publisher)
     lane_travel(0.5, velocity_msg, publisher)
+    lane_switch(0.2, velocity_msg, publisher)
     # rate.sleep()
 
 
@@ -61,7 +67,7 @@ def move(publisher, speed, vel_msg):
     publisher.publish(vel_msg)
 
 
-def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
+def rotate(publisher, vel_msg, target_yaw, clockwise):
     kP = 0.8
     error_prior = 0
     integral_prior = 0
@@ -71,7 +77,7 @@ def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
     loop_rate = rospy.Rate(10)
     loop_rate.sleep()    
     while not rospy.is_shutdown():        
-        target_rad = math.radians(relative_angle_degree)
+        target_rad = math.radians(target_yaw)
         error = target_rad - yaw
         
         t1 = rospy.Time.now().to_sec()
@@ -110,7 +116,7 @@ def home(vel_msg, publisher):
 def lane_travel(lin, vel_msg, publisher):
     count = 0
     move(publisher, lin, vel_msg)
-    rospy.Rate(1).sleep()
+    rospy.Rate(0.75).sleep()
     while not rospy.is_shutdown():
         move(publisher, lin, vel_msg)
         if(regions['bleft_1'] - regions['bright_1'] < 0):
@@ -122,6 +128,19 @@ def lane_travel(lin, vel_msg, publisher):
                 vel_msg.linear.x = 0
                 publisher.publish(vel_msg)
                 break
+
+
+def lane_switch(lin, vel_msg, publisher):
+    move(publisher, lin, vel_msg)
+    rotate(publisher, vel_msg, 0, True)
+    while not rospy.is_shutdown():
+        move(publisher, lin, vel_msg)
+        # rospy.Rate(10).sleep()
+        if(regions['front'] < 3.2):
+            vel_msg.linear.x = 0
+            publisher.publish(vel_msg)
+            break
+    rotate(publisher, vel_msg, -90, True)
 
 
 if __name__ == '__main__':
