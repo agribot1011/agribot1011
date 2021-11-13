@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 #note: (bleft - bright) can tell us which specific lane are we exiting
 # +ve: rightlane, -ve: leftlane, zero: middlelane
 #it can also tell us which lane are we about to enter
@@ -51,14 +52,12 @@ def control_loop(publisher):
     velocity_msg.angular.z = 0
     publisher.publish(velocity_msg)
     rate.sleep()
-    # while not rospy.is_shutdown():
     home(velocity_msg, publisher)
     lane_travel(0.5, velocity_msg, publisher, current_lane)
     lane_switch(0.2, velocity_msg, publisher, current_lane)
     lane_travel(0.5, velocity_msg, publisher, current_lane)
     lane_switch(0.2, velocity_msg, publisher, current_lane)
     lane_travel(0.5, velocity_msg, publisher, current_lane)
-    # rate.sleep()
 
 
 def move(publisher, speed, vel_msg):    
@@ -100,15 +99,17 @@ def rotate(publisher, vel_msg, target_yaw, clockwise):
     vel_msg.angular.z = 0
     publisher.publish(vel_msg)
 
-
+#function to bring the ebot to the left lane
 def home(vel_msg, publisher):
     global current_lane
-    current_lane['left_lane'] = True
+    current_lane['left_lane'] = True        #because we start from left lane
     rotate(publisher, vel_msg, 180, False)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         move(publisher, 0.5, vel_msg)
         rate.sleep()
+
+        #stop the bot when it is in the middle
         if(regions['front'] <= 1.5):
             vel_msg.linear.x = 0
             publisher.publish(vel_msg)
@@ -116,24 +117,35 @@ def home(vel_msg, publisher):
             break
     rotate(publisher, vel_msg, 90, True)
 
-
+#function to handle lane travelling and checking if the lane has been covered
 def lane_travel(lin, vel_msg, publisher, presentLane):
     global current_lane
-    count = 0
+
+    #this keeps track of how many pots the ebot has covered while traversing the lane
+    #there are a total of 10 pots in a single lane
+    pots_covered = 0
+    
     move(publisher, lin, vel_msg)
     rospy.Rate(0.75).sleep()
 
     if(presentLane['left_lane']):
         while not rospy.is_shutdown():
             move(publisher, lin, vel_msg)
+
+            #there is some gap present between each pot and we can use the laser scan data to detect this gap
+            #when a gap is detected that means the ebot has covered the pot
             if(regions['bleft_1'] - regions['bright_1'] < 0):
-                count = count + 1
-                rospy.loginfo(count)
+                pots_covered = pots_covered + 1
+                rospy.loginfo(pots_covered)
                 rospy.Rate(1).sleep()
-                if(count == 11):
+
+                #stop the bot when it exits the lane
+                if(pots_covered == 11):
                     rospy.loginfo("left lane exit")
                     vel_msg.linear.x = 0
                     publisher.publish(vel_msg)
+                    
+                    #set current lane accordingly
                     current_lane['left_lane'] = False
                     current_lane['middle_lane'] = True
                     break
@@ -142,10 +154,10 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
         while not rospy.is_shutdown():
             move(publisher, lin, vel_msg)
             if((regions['bleft_1'] - regions['bright_1'] < 1) and (regions['bleft_1'] > 1 or regions['bright_1'] > 1)):
-                count = count + 1
-                rospy.loginfo(count)
+                pots_covered = pots_covered + 1
+                rospy.loginfo(pots_covered)
                 rospy.Rate(1).sleep()
-                if(count == 11):
+                if(pots_covered == 11):
                     rospy.loginfo("middle lane exit")
                     vel_msg.linear.x = 0
                     publisher.publish(vel_msg)
@@ -157,16 +169,16 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
         while not rospy.is_shutdown():
             move(publisher, lin, vel_msg)
             if(regions['bleft_1'] - regions['bright_1'] > 0):
-                count = count + 1
-                rospy.loginfo(count)
+                pots_covered = pots_covered + 1
+                rospy.loginfo(pots_covered)
                 rospy.Rate(1).sleep()
-                if(count == 11):
+                if(pots_covered == 11):
                     rospy.loginfo("right lane exit")
                     vel_msg.linear.x = 0
                     publisher.publish(vel_msg)
                     break
 
-
+#function to handle lane switching
 def lane_switch(lin, vel_msg, publisher, presentLane):
     if(presentLane['middle_lane']):
         move(publisher, lin, vel_msg)
