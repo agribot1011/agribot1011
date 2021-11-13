@@ -31,15 +31,15 @@ def odom_callback(data):
 def laser_callback(msg):
     global regions
     regions = {
-        'bright_1':  min(min(msg.ranges[0:3]), msg.range_max) ,
+        'bright_1': min(min(msg.ranges[0:3]), msg.range_max) ,
         # 'bright_2':  min(min(msg.ranges[45:143]), msg.range_max) ,
         # 'fright_1':  min(min(msg.ranges[144:215]), msg.range_max) ,
         # 'fright_2':  min(min(msg.ranges[216:287]), msg.range_max) ,
-        'front':   msg.ranges[359],
+        'front': msg.ranges[359],
         # 'fleft_2':   min(min(msg.ranges[432:503]), msg.range_max) ,
         # 'fleft_1':   min(min(msg.ranges[504:575]), msg.range_max) ,
         # 'bleft_2':   min(min(msg.ranges[576:674]), msg.range_max) ,
-        'bleft_1':   min(min(msg.ranges[716:719]), msg.range_max) ,
+        'bleft_1': min(min(msg.ranges[716:719]), msg.range_max)
     }
     # rospy.loginfo(regions['front'])
 
@@ -64,6 +64,7 @@ def control_loop(publisher):
 def move(publisher, speed, vel_msg):    
     vel_msg.linear.x = speed
     yaw_error = math.pi/2 - yaw
+    # vel_msg.angular.z = 0.01 * yaw_error
     # rospy.loginfo(yaw_error)
     publisher.publish(vel_msg)
 
@@ -93,7 +94,7 @@ def rotate(publisher, vel_msg, target_yaw, clockwise):
         integral_prior = integral
         error_prior = error
         loop_rate.sleep()
-        if abs(error) <= 0.02:
+        if abs(error) <= 0.0216:
             rospy.loginfo("reached")
             break
     vel_msg.angular.z = 0
@@ -173,7 +174,7 @@ def lane_switch(lin, vel_msg, publisher, presentLane):
         while not rospy.is_shutdown():
             move(publisher, lin, vel_msg)
             # rospy.Rate(10).sleep()
-            if(regions['front'] < 3.2):
+            if(regions['front'] < 3.15):
                 vel_msg.linear.x = 0
                 publisher.publish(vel_msg)
                 break
