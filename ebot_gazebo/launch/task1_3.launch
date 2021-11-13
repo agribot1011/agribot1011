@@ -15,6 +15,7 @@
 	<include file="$(find tomato_gazebo)/launch/wall_follow.launch"/>
 
 	<!-- Teams can call their controller.py script here, create a node -->
+	<node pkg="ebot_nav" type="controller_og.py" name="controller" />
 
 
 	<!--  -->

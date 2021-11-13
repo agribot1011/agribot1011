@@ -15,13 +15,13 @@ yaw = 0
 def laser_callback(msg):
     global regions
     regions = {
-        'bright':  min(min(msg.ranges[0:143]),msg.range_max) ,
+        'bright_1':  min(min(msg.ranges[0:3]), msg.range_max) ,
         'fright':  min(min(msg.ranges[144:287]),msg.range_max) ,
         'front':   min(min(msg.ranges[288:431]),msg.range_max) ,
         'fleft':   min(min(msg.ranges[432:575]),msg.range_max) ,
-        'bleft':   min(min(msg.ranges[576:719]),msg.range_max) ,
+        'bleft_1':   min(min(msg.ranges[716:719]), msg.range_max) ,
     }
-    rospy.loginfo(regions)
+    rospy.loginfo(regions['bleft_1'] - regions['bright_1'])
 
 def odom_callback(data):
     # global pose
