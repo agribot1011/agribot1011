@@ -67,7 +67,7 @@ def move(publisher, speed, vel_msg):
     # rospy.loginfo(yaw_error)
     publisher.publish(vel_msg)
 
-# For rotating the robot, PID controller has been used. 
+# For rotating the robot PID controller has been used. 
 # kP = Proportional gain, kI = 	Integral gain, kD = Differential gain 
 # t0 = initial time 
 def rotate(publisher, vel_msg, target_yaw, clockwise):
