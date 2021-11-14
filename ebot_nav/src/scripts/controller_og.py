@@ -43,7 +43,7 @@ def laser_callback(msg):
         'bleft_1': min(min(msg.ranges[716:719]), msg.range_max)
     }
     # rospy.loginfo(regions['front'])
-
+#abcd
 
 def control_loop(publisher):
     rate = rospy.Rate(10)
@@ -67,9 +67,11 @@ def move(publisher, speed, vel_msg):
     # rospy.loginfo(yaw_error)
     publisher.publish(vel_msg)
 
-
+# For rotating the robot PID controller has been used. 
+# kP = Proportional gain, kI = 	Integral gain, kD = Differential gain 
+# t0 = initial time 
 def rotate(publisher, vel_msg, target_yaw, clockwise):
-    kP = 0.8
+    kP = 0.8 
     error_prior = 0
     integral_prior = 0
     kI = 0.0045
@@ -144,7 +146,7 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
                     rospy.loginfo("left lane exit")
                     vel_msg.linear.x = 0
                     publisher.publish(vel_msg)
-                    
+                     
                     #set current lane accordingly
                     current_lane['left_lane'] = False
                     current_lane['middle_lane'] = True
@@ -179,6 +181,14 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
                     break
 
 #function to handle lane switching
+#depending upon which lanes to switch we will have 2 cases:
+#Case1: FROM left lane to middle lane : we will move the bot then rotate it to 0 degrees clockwise
+#       and then anagin move forward till front is less than 3.5. Now at this position we 
+#       can rotate the bot to -90 degrees clockwise to face the middle lane.
+#Case2: FROM middle lane to right lane : we will move the bot then rotate it to 0 degrees anticlockwise
+#       and then anagin move forward till front is less than 1.5. Now at this position we 
+#       can rotate the bot to 90 degrees anticlockwise to face the right lane.
+#                                                                -sairaj
 def lane_switch(lin, vel_msg, publisher, presentLane):
     if(presentLane['middle_lane']):
         move(publisher, lin, vel_msg)
@@ -215,4 +225,3 @@ if __name__ == '__main__':
         control_loop(velocity_publisher)
     except rospy.ROSInterruptException:
         pass
-
