@@ -3,6 +3,7 @@
 #note: (bleft - bright) can tell us which specific lane are we exiting
 # +ve: rightlane, -ve: leftlane, zero: middlelane
 #it can also tell us which lane are we about to enter
+#this algorithm only needs 3 samples of the laser scan
 
 import math
 import rospy
