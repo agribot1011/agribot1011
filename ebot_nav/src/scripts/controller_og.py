@@ -43,7 +43,7 @@ def laser_callback(msg):
         'bleft_1': min(min(msg.ranges[716:719]), msg.range_max)
     }
     # rospy.loginfo(regions['front'])
-
+#abcd
 
 def control_loop(publisher):
     rate = rospy.Rate(10)
@@ -225,4 +225,3 @@ if __name__ == '__main__':
         control_loop(velocity_publisher)
     except rospy.ROSInterruptException:
         pass
-
