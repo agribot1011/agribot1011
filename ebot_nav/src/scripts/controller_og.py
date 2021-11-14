@@ -43,8 +43,8 @@ def laser_callback(msg):
         'bleft_1': min(min(msg.ranges[716:719]), msg.range_max)
     }
     # rospy.loginfo(regions['front'])
-#abcd
 
+#controller function to command the bot
 def control_loop(publisher):
     rate = rospy.Rate(10)
     velocity_msg = Twist()
