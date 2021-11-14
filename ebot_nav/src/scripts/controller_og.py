@@ -144,7 +144,7 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
                     rospy.loginfo("left lane exit")
                     vel_msg.linear.x = 0
                     publisher.publish(vel_msg)
-                    
+                     
                     #set current lane accordingly
                     current_lane['left_lane'] = False
                     current_lane['middle_lane'] = True
@@ -179,6 +179,13 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
                     break
 
 #function to handle lane switching
+#depending upon which lanes to switch we will have 2 cases:
+#Case1: FROM left lane to middle lane : we will move the bot then rotate it to 0 degrees clockwise
+#       and then anagin move forward till front is less than 3.5. Now at this position we 
+#       can rotate the bot to -90 degrees clockwise to face the middle lane
+#Case2: FROM middle lane to right lane : we will move the bot then rotate it to 0 degrees anticlockwise
+#       and then anagin move forward till front is less than 1.5. Now at this position we 
+#       can rotate the bot to 90 degrees anticlockwise to face the right lane
 def lane_switch(lin, vel_msg, publisher, presentLane):
     if(presentLane['middle_lane']):
         move(publisher, lin, vel_msg)
