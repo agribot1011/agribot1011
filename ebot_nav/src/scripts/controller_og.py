@@ -54,27 +54,32 @@ def move(publisher, speed, vel_msg):
 
 
 def rotate(publisher, vel_msg, relative_angle_degree, clockwise):
-    kP = 0.8
+    kP = 0.80
     error_prior = 0
     integral_prior = 0
-    kI = 0.005
+    kI = 0.006
+    kD = 0.0035
+    bias = 0
     t0 = rospy.Time.now().to_sec()
     loop_rate = rospy.Rate(10)    
+    loop_rate.sleep()
     while not rospy.is_shutdown():        
         target_rad = math.radians(relative_angle_degree)
         t1 = rospy.Time.now().to_sec()
         error = target_rad - yaw
         integral = integral_prior + abs(error) * (t1-t0)
+        error_prior + error
+        derivative = (error - error_prior) / (t1-t0)
         if clockwise:
-            vel_msg.angular.z = -(kP * abs(error) + kI * integral)
+            vel_msg.angular.z = -(kP * abs(error) + kI * integral + kD*derivative)
         else:
-            vel_msg.angular.z = kP * abs(error) + kI * integral
+            vel_msg.angular.z = kP * abs(error) + kI * integral + kD*derivative 
 
         publisher.publish(vel_msg)
         rospy.loginfo(target_rad - yaw)
         integral_prior = integral
         loop_rate.sleep()
-        if abs(error) <= 0.0075:
+        if abs(error) <= 0.005:
             rospy.loginfo("reached")
             break
     vel_msg.angular.z = 0
@@ -109,3 +114,4 @@ if __name__ == '__main__':
         control_loop(velocity_publisher)
     except rospy.ROSInterruptException:
         pass
+
