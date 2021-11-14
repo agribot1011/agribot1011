@@ -59,7 +59,7 @@ def control_loop(publisher):
     lane_switch(0.2, velocity_msg, publisher, current_lane)
     lane_travel(0.5, velocity_msg, publisher, current_lane)
 
-
+#function to move the ebot in straight direction.
 def move(publisher, speed, vel_msg):    
     vel_msg.linear.x = speed
     yaw_error = math.pi/2 - yaw
@@ -93,7 +93,7 @@ def rotate(publisher, vel_msg, target_yaw, clockwise):
         integral_prior = integral
         error_prior = error
         loop_rate.sleep()
-        if abs(error) <= 0.0216:
+        if abs(error) <= 0.02225:
             rospy.loginfo("reached")
             break
     vel_msg.angular.z = 0
