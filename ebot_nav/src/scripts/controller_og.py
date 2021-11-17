@@ -34,13 +34,13 @@ def laser_callback(msg):
     global regions
     regions = {
         'bright_1': min(min(msg.ranges[0:3]), msg.range_max) ,
-        'bright_2':  min(min(msg.ranges[0:60]), msg.range_max) ,
+        'bright_2':  min(min(msg.ranges[4:60]), msg.range_max) ,
         # 'fright_1':  min(min(msg.ranges[144:215]), msg.range_max) ,
         # 'fright_2':  min(min(msg.ranges[216:287]), msg.range_max) ,
         'front': msg.ranges[359],
         # 'fleft_2':   min(min(msg.ranges[432:503]), msg.range_max) ,
         # 'fleft_1':   min(min(msg.ranges[504:575]), msg.range_max) ,
-        'bleft_2':   min(min(msg.ranges[660:719]), msg.range_max) ,
+        'bleft_2':   min(min(msg.ranges[660:715]), msg.range_max) ,
         'bleft_1': min(min(msg.ranges[716:719]), msg.range_max)
     }
     # rospy.loginfo(regions['front'])
@@ -60,24 +60,24 @@ def control_loop(publisher):
     lane_switch(0.2, velocity_msg, publisher, current_lane)
     lane_travel(0.5, velocity_msg, publisher, current_lane)
 
-#function to move the ebot in straight di, current_lanerection.
-def move(publisher, speed, vel_msg, presentLane):
-    if(presentLane['left_lane'] or presentLane['right_lane'] or presentLane['middle_lane']):
-        set_point = 0
-        diff = regions['bright_2'] - regions['bleft_2']
-        kP = 1
-        #error_prior = 0
-        integral_prior = 0
-        kI = 0
-        #kD = 0
-        t0 = rospy.Time.now().to_sec()
-        vel_msg.angular.z =  -(kP*diff)
-        vel_msg.linear.x = speed
-        publisher.publish(vel_msg)
-    
-    else:
-        vel_msg.linear.x = speed
-        publisher.publish(vel_msg)
+#function to move the ebot in straight direction.
+def move(publisher, speed, vel_msg, start_time):
+    set_point = 0
+    diff = regions['bleft_2'] - regions['bright_2']
+    # rospy.loginfo(diff)
+    kP = 0.25
+    kI = 0.02    
+    integral_prior = 0
+    integral = integral_prior + (diff - set_point) * (rospy.Time.now().to_sec() - start_time)
+    integral_prior = integral
+    vel_msg.angular.z =  (kP * (diff - set_point) + kI * integral)
+    vel_msg.linear.x = speed
+    publisher.publish(vel_msg)
+
+
+def lane_move(publisher, vel_msg, speed):
+    vel_msg.linear.x = speed
+    publisher.publish(vel_msg)
 
 # For rotating the robot PID controller has been used. 
 # kP = Proportional gain, kI = 	Integral gain, kD = Differential gain 
@@ -119,17 +119,17 @@ def home(vel_msg, publisher):
     rotate(publisher, vel_msg, 180, False)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        move(publisher, 0.5, vel_msg, current_lane)
+        lane_move(publisher, vel_msg, 0.5)
         rate.sleep()
 
         #stop the bot when it is in the middle
-        if(regions['front'] <= 1.5):
+        if(regions['front'] <= 1.28):
             vel_msg.linear.x = 0
             publisher.publish(vel_msg)
             rospy.loginfo("reached2")
+            current_lane['left_lane'] = True        #because we start from left lane
             break
     rotate(publisher, vel_msg, 90, True)
-    current_lane['left_lane'] = True        #because we start from left lane
 
 
 
@@ -141,12 +141,13 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
     #there are a total of 10 pots in a single lane
     pots_covered = 0
     
-    move(publisher, lin, vel_msg, current_lane)
+    lane_move(publisher, vel_msg, lin)
     rospy.Rate(0.75).sleep()
 
     if(presentLane['left_lane']):
+        t0 = rospy.Time.now().to_sec()
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg, current_lane)
+            move(publisher, lin, vel_msg, t0)
 
             #there is some gap present between each pot and we can use the laser scan data to detect this gap
             #when a gap is detected that means the ebot has covered the pot
@@ -167,8 +168,9 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
                     break
 
     elif(presentLane['middle_lane']):
+        t0 = rospy.Time.now().to_sec()
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg, current_lane)
+            move(publisher, lin, vel_msg, t0)
             if((regions['bleft_1'] - regions['bright_1'] < 1) and (regions['bleft_1'] > 1 or regions['bright_1'] > 1)):
                 pots_covered = pots_covered + 1
                 rospy.loginfo(pots_covered)
@@ -182,8 +184,9 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
                     break
 
     elif(presentLane['right_lane']):
+        t0 = rospy.Time.now().to_sec()
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg, current_lane)
+            move(publisher, lin, vel_msg, t0)
             if(regions['bleft_1'] - regions['bright_1'] > 0):
                 pots_covered = pots_covered + 1
                 rospy.loginfo(pots_covered)
@@ -205,10 +208,10 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
 #                                                                -sairaj
 def lane_switch(lin, vel_msg, publisher, presentLane):
     if(presentLane['middle_lane']):
-        move(publisher, lin, vel_msg, current_lane)
+        lane_move(publisher, vel_msg, lin)
         rotate(publisher, vel_msg, 0, True)
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg, current_lane)
+            lane_move(publisher, vel_msg, lin)
             # rospy.Rate(10).sleep()
             if(regions['front'] < 3.15):
                 vel_msg.linear.x = 0
@@ -217,10 +220,10 @@ def lane_switch(lin, vel_msg, publisher, presentLane):
         rotate(publisher, vel_msg, -90, True)
 
     elif(presentLane['right_lane']):
-        move(publisher, lin, vel_msg, current_lane)
+        lane_move(publisher, vel_msg, lin)
         rotate(publisher, vel_msg, 0, False)
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg, current_lane)
+            lane_move(publisher, vel_msg, lin)
             # rospy.Rate(10).sleep()
             if(regions['front'] < 1.25):
                 vel_msg.linear.x = 0
