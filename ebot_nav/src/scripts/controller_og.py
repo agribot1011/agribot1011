@@ -14,6 +14,7 @@ from tf.transformations import euler_from_quaternion
 
 regions = {}
 yaw = 0
+#It is a python dictionary that keeps track of the current lane that the robot is positioned in
 current_lane = {  
     'left_lane' : False ,              
     'middle_lane' : False ,
