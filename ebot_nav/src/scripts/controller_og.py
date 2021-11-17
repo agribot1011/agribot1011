@@ -60,20 +60,24 @@ def control_loop(publisher):
     lane_switch(0.2, velocity_msg, publisher, current_lane)
     lane_travel(0.5, velocity_msg, publisher, current_lane)
 
-#function to move the ebot in straight direction.
-def move(publisher, speed, vel_msg):
-    set_point = 0
-    diff = regions['bright_2'] - regions['bleft_2']
-    kP = 5 
-    #error_prior = 0
-    integral_prior = 0
-    kI = 0
-    #kD = 0
-    t0 = rospy.Time.now().to_sec()
-    vel_msg.angular.z =  -(kP*diff)
-    vel_msg.linear.x = speed
+#function to move the ebot in straight di, current_lanerection.
+def move(publisher, speed, vel_msg, presentLane):
+    if(presentLane['left_lane'] or presentLane['right_lane'] or presentLane['middle_lane']):
+        set_point = 0
+        diff = regions['bright_2'] - regions['bleft_2']
+        kP = 1
+        #error_prior = 0
+        integral_prior = 0
+        kI = 0
+        #kD = 0
+        t0 = rospy.Time.now().to_sec()
+        vel_msg.angular.z =  -(kP*diff)
+        vel_msg.linear.x = speed
+        publisher.publish(vel_msg)
     
-    publisher.publish(vel_msg)
+    else:
+        vel_msg.linear.x = speed
+        publisher.publish(vel_msg)
 
 # For rotating the robot PID controller has been used. 
 # kP = Proportional gain, kI = 	Integral gain, kD = Differential gain 
@@ -112,11 +116,10 @@ def rotate(publisher, vel_msg, target_yaw, clockwise):
 #function to bring the ebot to the left lane
 def home(vel_msg, publisher):
     global current_lane
-    current_lane['left_lane'] = True        #because we start from left lane
     rotate(publisher, vel_msg, 180, False)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        move(publisher, 0.5, vel_msg)
+        move(publisher, 0.5, vel_msg, current_lane)
         rate.sleep()
 
         #stop the bot when it is in the middle
@@ -126,6 +129,9 @@ def home(vel_msg, publisher):
             rospy.loginfo("reached2")
             break
     rotate(publisher, vel_msg, 90, True)
+    current_lane['left_lane'] = True        #because we start from left lane
+
+
 
 #function to handle lane travelling and checking if the lane has been covered
 def lane_travel(lin, vel_msg, publisher, presentLane):
@@ -135,12 +141,12 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
     #there are a total of 10 pots in a single lane
     pots_covered = 0
     
-    move(publisher, lin, vel_msg)
+    move(publisher, lin, vel_msg, current_lane)
     rospy.Rate(0.75).sleep()
 
     if(presentLane['left_lane']):
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg)
+            move(publisher, lin, vel_msg, current_lane)
 
             #there is some gap present between each pot and we can use the laser scan data to detect this gap
             #when a gap is detected that means the ebot has covered the pot
@@ -162,7 +168,7 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
 
     elif(presentLane['middle_lane']):
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg)
+            move(publisher, lin, vel_msg, current_lane)
             if((regions['bleft_1'] - regions['bright_1'] < 1) and (regions['bleft_1'] > 1 or regions['bright_1'] > 1)):
                 pots_covered = pots_covered + 1
                 rospy.loginfo(pots_covered)
@@ -177,7 +183,7 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
 
     elif(presentLane['right_lane']):
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg)
+            move(publisher, lin, vel_msg, current_lane)
             if(regions['bleft_1'] - regions['bright_1'] > 0):
                 pots_covered = pots_covered + 1
                 rospy.loginfo(pots_covered)
@@ -190,19 +196,19 @@ def lane_travel(lin, vel_msg, publisher, presentLane):
 
 #function to handle lane switching
 #depending upon which lanes to switch we will have 2 cases:
-#Case1: FROM left lane to middle lane : we will move the bot then rotate it to 0 degrees clockwise
-#       and then again move forward till front is less than 3.5. Now at this position we 
+#Case1: FROM left lane to middle lane : we will move the bot then rotate it , current_laneto 0 degrees clockwise
+#       and then again move forward till front is l, current_laneess than 3.5. Now at this position we 
 #       can rotate the bot to -90 degrees clockwise to face the middle lane.
-#Case2: FROM middle lane to right lane : we will move the bot then rotate it to 0 degrees anticlockwise
-#       and then anagin move forward till front is less than 1.5. Now at this position we 
+#Case2: FROM middle lane to right lane : we will move the bot then rotate it , current_laneto 0 degrees anticlockwise
+#       and then anagin move forward till front is l, current_laneess than 1.5. Now at this position we 
 #       can rotate the bot to 90 degrees anticlockwise to face the right lane.
 #                                                                -sairaj
 def lane_switch(lin, vel_msg, publisher, presentLane):
     if(presentLane['middle_lane']):
-        move(publisher, lin, vel_msg)
+        move(publisher, lin, vel_msg, current_lane)
         rotate(publisher, vel_msg, 0, True)
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg)
+            move(publisher, lin, vel_msg, current_lane)
             # rospy.Rate(10).sleep()
             if(regions['front'] < 3.15):
                 vel_msg.linear.x = 0
@@ -211,10 +217,10 @@ def lane_switch(lin, vel_msg, publisher, presentLane):
         rotate(publisher, vel_msg, -90, True)
 
     elif(presentLane['right_lane']):
-        move(publisher, lin, vel_msg)
+        move(publisher, lin, vel_msg, current_lane)
         rotate(publisher, vel_msg, 0, False)
         while not rospy.is_shutdown():
-            move(publisher, lin, vel_msg)
+            move(publisher, lin, vel_msg, current_lane)
             # rospy.Rate(10).sleep()
             if(regions['front'] < 1.25):
                 vel_msg.linear.x = 0
