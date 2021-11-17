@@ -16,8 +16,8 @@ regions = {}
 yaw = 0
 current_lane = {  
     'left_lane' : False ,              
-    'middle_lane' : False ,
-    'right_lane' :  False,
+    'middle_lane' : False,
+    'right_lane' :  False, 
 }
 
 def odom_callback(data):
