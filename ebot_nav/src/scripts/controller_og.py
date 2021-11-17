@@ -14,7 +14,6 @@ from tf.transformations import euler_from_quaternion
 
 regions = {}
 yaw = 0
-#It is a python dictionary that keeps track of the current lane that the robot is positioned in
 current_lane = {  
     'left_lane' : False ,              
     'middle_lane' : False ,
@@ -35,13 +34,13 @@ def laser_callback(msg):
     global regions
     regions = {
         'bright_1': min(min(msg.ranges[0:3]), msg.range_max) ,
-        # 'bright_2':  min(min(msg.ranges[45:143]), msg.range_max) ,
+        'bright_2':  min(min(msg.ranges[0:60]), msg.range_max) ,
         # 'fright_1':  min(min(msg.ranges[144:215]), msg.range_max) ,
         # 'fright_2':  min(min(msg.ranges[216:287]), msg.range_max) ,
         'front': msg.ranges[359],
         # 'fleft_2':   min(min(msg.ranges[432:503]), msg.range_max) ,
         # 'fleft_1':   min(min(msg.ranges[504:575]), msg.range_max) ,
-        # 'bleft_2':   min(min(msg.ranges[576:674]), msg.range_max) ,
+        'bleft_2':   min(min(msg.ranges[660:719]), msg.range_max) ,
         'bleft_1': min(min(msg.ranges[716:719]), msg.range_max)
     }
     # rospy.loginfo(regions['front'])
@@ -62,11 +61,18 @@ def control_loop(publisher):
     lane_travel(0.5, velocity_msg, publisher, current_lane)
 
 #function to move the ebot in straight direction.
-def move(publisher, speed, vel_msg):    
+def move(publisher, speed, vel_msg):
+    set_point = 0
+    diff = regions['bright_2'] - regions['bleft_2']
+    kP = 5 
+    #error_prior = 0
+    integral_prior = 0
+    kI = 0
+    #kD = 0
+    t0 = rospy.Time.now().to_sec()
+    vel_msg.angular.z =  -(kP*diff)
     vel_msg.linear.x = speed
-    yaw_error = math.pi/2 - yaw
-    # vel_msg.angular.z = 0.01 * yaw_error
-    # rospy.loginfo(yaw_error)
+    
     publisher.publish(vel_msg)
 
 # For rotating the robot PID controller has been used. 
