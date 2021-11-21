@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find ebot_gazebo)/urdf/agri_bot.xacro'"/>
+    <param name="robot_description" command="$(find xacro)/xacro '$(find ebot_gazebo)/urdf/agri_bot.xacro'"/>
 
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
     <node name="rviz" pkg="rviz" type="rviz"   args="-d $(find ebot_gazebo)/rviz/agribot.rviz" />
