@@ -29,7 +29,7 @@ joint_state_controller:
 controller_list:
   - name: "arm_controller"
     action_ns: follow_joint_trajectory
-    type: FollowJointTrajectory
+    type: FollowJointTrajectory 
     default: true
     joints:
       - shoulder_pan_joint
