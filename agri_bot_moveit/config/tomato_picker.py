@@ -1,8 +1,5 @@
 #! /usr/bin/env python3
 
-from __future__ import print_function
-# from six.moves import input
-
 import sys
 import copy
 import rospy
@@ -12,58 +9,15 @@ import geometry_msgs.msg
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import math
 import actionlib
-try:
-    from math import pi, tau, dist, fabs, cos
-except:  # For Python 2 compatibility
-    from math import pi, fabs, cos, sqrt
-
-    tau = 2.0 * pi
-
-    def dist(p, q):
-        return sqrt(sum((p_i - q_i) ** 2.0 for p_i, q_i in zip(p, q)))
-
 
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 
-## END_SUB_TUTORIAL
 
-
-def all_close(goal, actual, tolerance):
-    """
-    Convenience method for testing if the values in two lists are within a tolerance of each other.
-    For Pose and PoseStamped inputs, the angle between the two quaternions is compared (the angle
-    between the identical orientations q and -q is calculated correctly).
-    @param: goal       A list of floats, a Pose or a PoseStamped
-    @param: actual     A list of floats, a Pose or a PoseStamped
-    @param: tolerance  A float
-    @returns: bool
-    """
-    if type(goal) is list:
-        for index in range(len(goal)):
-            if abs(actual[index] - goal[index]) > tolerance:
-                return False
-
-    elif type(goal) is geometry_msgs.msg.PoseStamped:
-        return all_close(goal.pose, actual.pose, tolerance)
-
-    elif type(goal) is geometry_msgs.msg.Pose:
-        x0, y0, z0, qx0, qy0, qz0, qw0 = pose_to_list(actual)
-        x1, y1, z1, qx1, qy1, qz1, qw1 = pose_to_list(goal)
-        # Euclidean distance
-        d = dist((x1, y1, z1), (x0, y0, z0))
-        # phi = angle between orientations
-        cos_phi_half = fabs(qx0 * qx1 + qy0 * qy1 + qz0 * qz1 + qw0 * qw1)
-        return d <= tolerance and cos_phi_half >= cos(tolerance / 2.0)
-
-    return True
-
-
-class MoveGroupPythonInterfaceTutorial(object):
-    """MoveGroupPythonInterfaceTutorial"""
+class task_2_plan(object):
 
     def __init__(self):
-        super(MoveGroupPythonInterfaceTutorial, self).__init__()
+        super(task_2_plan, self).__init__()
 
         ## BEGIN_SUB_TUTORIAL setup
         ##
@@ -165,46 +119,11 @@ class MoveGroupPythonInterfaceTutorial(object):
 
         ## END_SUB_TUTORIAL
 
-        # For testing:
-        current_joints = move_group.get_current_joint_values()
-        return all_close(joint_goal, current_joints, 0.01)
-
     def go_to_pose_goal(self, pose_goal):
         # Copy class variables to local variables to make the web tutorials more clear.
         # In practice, you should use the class variables directly unless you have a good
         # reason not to.
         move_group = self.move_group
-
-        ## BEGIN_SUB_TUTORIAL plan_to_pose
-        ##
-        ## Planning to a Pose Goal
-        ## ^^^^^^^^^^^^^^^^^^^^^^^
-        ## We can plan a motion for this group to a desired pose for the
-        ## end-effector:
-        #     # x: 0.28062532062816564
-        #     # y: 0.41299489753737206
-        #     # z: 0.7027670294156926
-
-        #     # q_x: -0.00024143703232379802
-        #     # q_y: -0.00025977494432086
-        #     # q_z: 0.7313996313813955
-        #     # q_w: 0.6819490108800632
-        # pose_goal_1 = geometry_msgs.msg.Pose()
-        # quat = quaternion_from_euler(math.pi, 0, -math.pi/2, axes='sxyz')
-        # # rospy.loginfo(quat)
-        # pose_goal_1.orientation.x = quat[0]
-        # pose_goal_1.orientation.y = quat[1]
-        # pose_goal_1.orientation.z = quat[2]
-        # pose_goal_1.orientation.w = quat[3]
-        # # x: 0.15346005217719014
-        # # y: 0.5913129401745189
-        # # z: 0.6636347917764825
-        
-        # pose_goal_1.position.x = 0.43272636809439946
-        # pose_goal_1.position.y = 0.49155827326090934
-        # pose_goal_1.position.z = 0.7064734758972365
-
-
         move_group.set_pose_target(pose_goal)
 
         ## Now, we call the planner to compute the plan and execute it.
@@ -215,18 +134,7 @@ class MoveGroupPythonInterfaceTutorial(object):
         # Note: there is no equivalent function for clear_joint_value_targets()
         move_group.clear_pose_targets()
 
-        ## END_SUB_TUTORIAL
-
-        # For testing:
-        # Note that since this section of code will not be included in the tutorials
-        # we use the class variable rather than the copied state variable
-        current_pose = self.move_group.get_current_pose().pose
-        return all_close(pose_goal, current_pose, 0.01)
-
     def plan_cartesian_path(self, scale=1):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
         move_group = self.move_group
         ## BEGIN_SUB_TUTORIAL plan_cartesian_path
         ##
@@ -239,11 +147,7 @@ class MoveGroupPythonInterfaceTutorial(object):
         waypoints = []
 
         wpose = move_group.get_current_pose().pose
-        # wpose.position.z -= scale * 0.05  # First move up (z)
-        # wpose.position.y -= scale * -0.15  # and sideways (y)
-        # waypoints.append(copy.deepcopy(wpose))
-
-        wpose.position.x -= scale * 0.085  # Second move forward/backwards in (x)
+        wpose.position.x -= scale * 0.085  # Second move forward in (x)
         waypoints.append(copy.deepcopy(wpose))
 
         # We want the Cartesian path to be interpolated at a resolution of 1 cm
@@ -257,34 +161,6 @@ class MoveGroupPythonInterfaceTutorial(object):
 
         # Note: We are just planning, not asking move_group to actually move the robot yet:
         return plan, fraction
-
-        ## END_SUB_TUTORIAL
-
-    def display_trajectory(self, plan):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
-        robot = self.robot
-        display_trajectory_publisher = self.display_trajectory_publisher
-
-        ## BEGIN_SUB_TUTORIAL display_trajectory
-        ##
-        ## Displaying a Trajectory
-        ## ^^^^^^^^^^^^^^^^^^^^^^^
-        ## You can ask RViz to visualize a plan (aka trajectory) for you. But the
-        ## group.plan() method does this automatically so this is not that useful
-        ## here (it just displays the same trajectory again):
-        ##
-        ## A `DisplayTrajectory`_ msg has two primary fields, trajectory_start and trajectory.
-        ## We populate the trajectory_start with our current robot state to copy over
-        ## any AttachedCollisionObjects and add our plan to the trajectory.
-        display_trajectory = moveit_msgs.msg.DisplayTrajectory()
-        display_trajectory.trajectory_start = robot.get_current_state()
-        display_trajectory.trajectory.append(plan)
-        # Publish
-        display_trajectory_publisher.publish(display_trajectory)
-
-        ## END_SUB_TUTORIAL
 
     def execute_plan(self, plan):
         # Copy class variables to local variables to make the web tutorials more clear.
@@ -304,162 +180,17 @@ class MoveGroupPythonInterfaceTutorial(object):
         ## first waypoint in the `RobotTrajectory`_ or ``execute()`` will fail
         ## END_SUB_TUTORIAL
 
-    def wait_for_state_update(
-        self, box_is_known=False, box_is_attached=False, timeout=4
-    ):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
-        box_name = self.box_name
-        scene = self.scene
-
-        ## BEGIN_SUB_TUTORIAL wait_for_scene_update
-        ##
-        ## Ensuring Collision Updates Are Received
-        ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        ## If the Python node dies before publishing a collision object update message, the message
-        ## could get lost and the box will not appear. To ensure that the updates are
-        ## made, we wait until we see the changes reflected in the
-        ## ``get_attached_objects()`` and ``get_known_object_names()`` lists.
-        ## For the purpose of this tutorial, we call this function after adding,
-        ## removing, attaching or detaching an object in the planning scene. We then wait
-        ## until the updates have been made or ``timeout`` seconds have passed
-        start = rospy.get_time()
-        seconds = rospy.get_time()
-        while (seconds - start < timeout) and not rospy.is_shutdown():
-            # Test if the box is in attached objects
-            attached_objects = scene.get_attached_objects([box_name])
-            is_attached = len(attached_objects.keys()) > 0
-
-            # Test if the box is in the scene.
-            # Note that attaching the box will remove it from known_objects
-            is_known = box_name in scene.get_known_object_names()
-
-            # Test if we are in the expected state
-            if (box_is_attached == is_attached) and (box_is_known == is_known):
-                return True
-
-            # Sleep so that we give other threads time on the processor
-            rospy.sleep(0.1)
-            seconds = rospy.get_time()
-
-        # If we exited the while loop without returning then we timed out
-        return False
-        ## END_SUB_TUTORIAL
-
-    def add_box(self, timeout=4):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
-        box_name = self.box_name
-        scene = self.scene
-
-        ## BEGIN_SUB_TUTORIAL add_box
-        ##
-        ## Adding Objects to the Planning Scene
-        ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        ## First, we will create a box in the planning scene between the fingers:
-        box_pose = geometry_msgs.msg.PoseStamped()
-        box_pose.header.frame_id = "panda_hand"
-        box_pose.pose.orientation.w = 1.0
-        box_pose.pose.position.z = 0.11  # above the panda_hand frame
-        box_name = "box"
-        scene.add_box(box_name, box_pose, size=(0.075, 0.075, 0.075))
-
-        ## END_SUB_TUTORIAL
-        # Copy local variables back to class variables. In practice, you should use the class
-        # variables directly unless you have a good reason not to.
-        self.box_name = box_name
-        return self.wait_for_state_update(box_is_known=True, timeout=timeout)
-
-    def attach_box(self, timeout=4):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
-        box_name = self.box_name
-        robot = self.robot
-        scene = self.scene
-        eef_link = self.eef_link
-        group_names = self.group_names
-
-        ## BEGIN_SUB_TUTORIAL attach_object
-        ##
-        ## Attaching Objects to the Robot
-        ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        ## Next, we will attach the box to the Panda wrist. Manipulating objects requires the
-        ## robot be able to touch them without the planning scene reporting the contact as a
-        ## collision. By adding link names to the ``touch_links`` array, we are telling the
-        ## planning scene to ignore collisions between those links and the box. For the Panda
-        ## robot, we set ``grasping_group = 'hand'``. If you are using a different robot,
-        ## you should change this value to the name of your end effector group name.
-        grasping_group = "hand"
-        touch_links = robot.get_link_names(group=grasping_group)
-        scene.attach_box(eef_link, box_name, touch_links=touch_links)
-        ## END_SUB_TUTORIAL
-
-        # We wait for the planning scene to update.
-        return self.wait_for_state_update(
-            box_is_attached=True, box_is_known=False, timeout=timeout
-        )
-
-    def detach_box(self, timeout=4):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
-        box_name = self.box_name
-        scene = self.scene
-        eef_link = self.eef_link
-
-        ## BEGIN_SUB_TUTORIAL detach_object
-        ##
-        ## Detaching Objects from the Robot
-        ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        ## We can also detach and remove the object from the planning scene:
-        scene.remove_attached_object(eef_link, name=box_name)
-        ## END_SUB_TUTORIAL
-
-        # We wait for the planning scene to update.
-        return self.wait_for_state_update(
-            box_is_known=True, box_is_attached=False, timeout=timeout
-        )
-
-    def remove_box(self, timeout=4):
-        # Copy class variables to local variables to make the web tutorials more clear.
-        # In practice, you should use the class variables directly unless you have a good
-        # reason not to.
-        box_name = self.box_name
-        scene = self.scene
-
-        ## BEGIN_SUB_TUTORIAL remove_object
-        ##
-        ## Removing Objects from the Planning Scene
-        ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        ## We can remove the box from the world.
-        scene.remove_world_object(box_name)
-
-        ## **Note:** The object must be detached before we can remove it from the world
-        ## END_SUB_TUTORIAL
-
-        # We wait for the planning scene to update.
-        return self.wait_for_state_update(
-            box_is_attached=False, box_is_known=False, timeout=timeout
-        )
-
+    
 
 def main():
     try:
         close_theta = 0.8040252734021681
         open = 0
-        print("")
-        print("----------------------------------------------------------")
-        print("Welcome to the MoveIt MoveGroup Python Interface Tutorial")
-        print("----------------------------------------------------------")
-        print("Press Ctrl-D to exit at any time")
-        print("")
+        delay = 0.1
         input(
-            "============ Press `Enter` to begin the tutorial by setting up the moveit_commander ..."
+            "============ Press `Enter` to begin the simulation by setting up the moveit_commander ..."
         )
-        tutorial = MoveGroupPythonInterfaceTutorial()
+        tutorial = task_2_plan()
 
         pose_home = geometry_msgs.msg.Pose()
         quat = quaternion_from_euler(math.pi, 0, math.pi/2, axes='sxyz')
@@ -471,7 +202,21 @@ def main():
         pose_home.position.y = 0.10914157536538296
         pose_home.position.z = 0.8250508366632884
 
-        # input("============ Press `Enter` to execute a movement using a pose goal 1 ...")
+        #=========================================
+        ## tomato 1 begin
+        #=========================================
+        pose_goal_0 = geometry_msgs.msg.Pose()
+        quat = quaternion_from_euler(math.pi, 0, math.pi, axes='sxyz')
+        pose_goal_0.orientation.x = quat[0]
+        pose_goal_0.orientation.y = quat[1]
+        pose_goal_0.orientation.z = quat[2]
+        pose_goal_0.orientation.w = quat[3]
+        pose_goal_0.position.x = 0.43272636809439946
+        pose_goal_0.position.y = 0.30155827326090934
+        pose_goal_0.position.z = 0.7064734758972365
+        rospy.sleep(delay)
+        tutorial.go_to_pose_goal(pose_goal_0)
+
         pose_goal_1 = geometry_msgs.msg.Pose()
         quat = quaternion_from_euler(math.pi, 0, -math.pi/2, axes='sxyz')
         pose_goal_1.orientation.x = quat[0]
@@ -481,56 +226,56 @@ def main():
         pose_goal_1.position.x = 0.43272636809439946
         pose_goal_1.position.y = 0.49155827326090934
         pose_goal_1.position.z = 0.7064734758972365
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_pose_goal(pose_goal_1)
 
-        # input("============ Press `Enter` to execute a movement using a pose goal 2 ...")
         pose_goal_2 = geometry_msgs.msg.Pose()
         quat = quaternion_from_euler(math.pi, 0, -math.pi/2, axes='sxyz')
         pose_goal_2.orientation.x = quat[0]
         pose_goal_2.orientation.y = quat[1]
         pose_goal_2.orientation.z = quat[2]
         pose_goal_2.orientation.w = quat[3]
-        # x: 0.15346005217719014
-        # y: 0.5913129401745189
-        # z: 0.6636347917764825
+
         pose_goal_2.position.x = 0.30346005217719014
         pose_goal_2.position.y = 0.5513129401745189
         pose_goal_2.position.z = 0.6636347917764825
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_pose_goal(pose_goal_2)
 
         # input("============ Press `Enter` to plan and display a Cartesian path ...")
         cartesian_plan, fraction = tutorial.plan_cartesian_path()
 
         # input("============ Press `Enter` to execute a saved path ...")
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.execute_plan(cartesian_plan)
 
         # input("============ Press `Enter` to execute a movement using a predefined goal 2 ...")
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_joint_state(close_theta)
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_pose_goal(pose_goal_2)
-        rospy.sleep(1)
+        rospy.sleep(delay)
         pose_goal_3 = geometry_msgs.msg.Pose()
         quat = quaternion_from_euler(math.pi, 0, 0, axes='sxyz')
         pose_goal_3.orientation.x = quat[0]
         pose_goal_3.orientation.y = quat[1]
         pose_goal_3.orientation.z = quat[2]
         pose_goal_3.orientation.w = quat[3]
-        # x: 0.15346005217719014
-        # y: 0.5913129401745189
-        # z: 0.6636347917764825
+
         pose_goal_3.position.x = 0.5620792488276463
         pose_goal_3.position.y = 0.548274703294862
         pose_goal_3.position.z = 0.7004179607681765
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_pose_goal(pose_goal_3)
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_joint_state(open)
-        #tomato 1 done
+        #=========================================
+        ## tomato 1 done
+        #=========================================
 
+        #=========================================
+        ## tomato 2 begin
+        #=========================================
         tutorial.go_to_pose_goal(pose_goal_1)
 
         pose_goal_4 = geometry_msgs.msg.Pose()
@@ -543,18 +288,18 @@ def main():
         # y: 0.6414064379415384
         # z: 0.9182789912083482
         pose_goal_4.position.x = 0.4795595599174515
-        pose_goal_4.position.y = 0.6414064379415384
+        pose_goal_4.position.y = 0.6440064379415384
         pose_goal_4.position.z = 0.9182789912083482
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_pose_goal(pose_goal_4)
         cartesian_plan, fraction = tutorial.plan_cartesian_path()
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.execute_plan(cartesian_plan)
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_joint_state(close_theta)
-        rospy.sleep(1)
+        rospy.sleep(delay)
         tutorial.go_to_pose_goal(pose_goal_4)
-        rospy.sleep(1)
+        rospy.sleep(delay)
         pose_goal_5 = geometry_msgs.msg.Pose()
         quat = quaternion_from_euler(math.pi, 0, 0, axes='sxyz')
         pose_goal_5.orientation.x = quat[0]
@@ -569,14 +314,55 @@ def main():
         pose_goal_5.position.z = 0.7583967151435929
         tutorial.go_to_pose_goal(pose_goal_5)
         tutorial.go_to_joint_state(open)
+        #=========================================
+        ## tomato 2 done
+        #=========================================
 
+        #=========================================
+        ## tomato 3 begin
+        #=========================================
+        tutorial.go_to_pose_goal(pose_goal_4)
+        pose_goal_6 = geometry_msgs.msg.Pose()
+        quat = quaternion_from_euler(math.pi, 0, -math.pi/2, axes='sxyz')
+        pose_goal_6.orientation.x = quat[0]
+        pose_goal_6.orientation.y = quat[1]
+        pose_goal_6.orientation.z = quat[2]
+        pose_goal_6.orientation.w = quat[3]
+        # x: 0.1567514926990433
+        # y: 0.4747551398355176
+        # z: 1.1936413983356673
+        pose_goal_6.position.x = 0.1867514926990433
+        pose_goal_6.position.y = 0.4747551398355176
+        pose_goal_6.position.z = 1.1936413983356673
+        rospy.sleep(delay)
+        tutorial.go_to_pose_goal(pose_goal_6)
+        cartesian_plan, fraction = tutorial.plan_cartesian_path()
+        rospy.sleep(delay)
+        tutorial.execute_plan(cartesian_plan)
+        rospy.sleep(delay)
+        tutorial.go_to_joint_state(close_theta)
+        rospy.sleep(delay)
+        tutorial.go_to_pose_goal(pose_goal_6)
+        rospy.sleep(delay)
+        pose_goal_7 = geometry_msgs.msg.Pose()
+        quat = quaternion_from_euler(math.pi, 0, 0, axes='sxyz')
+        pose_goal_7.orientation.x = quat[0]
+        pose_goal_7.orientation.y = quat[1]
+        pose_goal_7.orientation.z = quat[2]
+        pose_goal_7.orientation.w = quat[3]
+        # x: 0.47946054091025203
+        # y: 0.3764251813086777
+        # z: 0.7083967151435929
+        pose_goal_7.position.x = 0.47946054091025203
+        pose_goal_7.position.y = 0.502364251813086777
+        pose_goal_7.position.z = 0.7583967151435929
+        tutorial.go_to_pose_goal(pose_goal_5)
+        tutorial.go_to_joint_state(open)
+        #=========================================
+        ## tomato 3 done
+        #=========================================
 
-
-
-
-
-
-        print("============ Python tutorial demo complete!")
+        print("============ All three tomatoes collected")
     except rospy.ROSInterruptException:
         return
     except KeyboardInterrupt:
