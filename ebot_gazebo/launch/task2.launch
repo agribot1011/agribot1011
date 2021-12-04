@@ -24,11 +24,12 @@
 
 
   <!-- include your manipulation launch file from agri_bot_moveit package -->
-  <!-- <include file="$(find agri_bot_moveit)/launch/ur5_bringup_moveit.launch"/> -->
+  <include file="$(find agri_bot_moveit)/launch/ur5_bringup_moveit.launch"/>
 
 
 
   <!-- include your ros node for manipulation -->
+	<node pkg="agri_bot_moveit" type="tomato_picker.py" name="picker" />
 
 
 <!-- recording ros bag -->
