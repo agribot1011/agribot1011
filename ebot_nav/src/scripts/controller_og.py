@@ -65,8 +65,8 @@ def move(publisher, speed, vel_msg, start_time):
     set_point = 0
     diff = regions['bleft_2'] - regions['bright_2']
     # rospy.loginfo(diff)
-    kP = 0.25
-    kI = 0.02    
+    kP = 0.1
+    kI = 0.01    
     integral_prior = 0
     integral = integral_prior + (diff - set_point) * (rospy.Time.now().to_sec() - start_time)
     integral_prior = integral
