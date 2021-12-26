@@ -23,27 +23,11 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2;
     pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
     pcl::PCLPointCloud2 cloud_filtered;
-    // pcl::PCLPointCloud2ConstPtr cloudPoint(cloud_filtered);
-    
 
     // Convert to PCL data type
     pcl_conversions::toPCL(*cloud_msg, *cloud);
 
-    // Perform the actual filtering
-    // pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-    // sor.setInputCloud (cloud_msg);
-    // sor.setLeafSize (0.01, 0.01, 0.01);
-    // sor.filter (*cloud_filtered);
-
     pcl::PassThrough<pcl::PCLPointCloud2> pass;
-    // pass.setInputCloud (cloudPoint);
-    // // pass.setFilterFieldName ("y");
-    // // pass.setFilterLimits (0.55, 1);
-    // pass.setFilterFieldName ("x");
-    // pass.setFilterLimits (-2, 2);
-    // pass.setFilterLimitsNegative (true);
-    // pass.filter (*cloud_filtered);
-
     pass.setInputCloud (cloudPtr);
     pass.setFilterFieldName ("y");
     pass.setFilterLimits (-0.5, 0.5);

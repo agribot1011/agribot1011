@@ -208,9 +208,12 @@ include_directories(
 
 add_executable(pcl_test src/pcl_test.cpp)
 add_dependencies(pcl_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 target_link_libraries(pcl_test ${catkin_LIBRARIES})
+
 add_executable(xcv src/xcv.cpp)
 add_dependencies(xcv ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 target_link_libraries(xcv ${catkin_LIBRARIES})
+
+add_executable(wall_remove src/wall_remove.cpp)
+add_dependencies(xcv ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(wall_remove ${catkin_LIBRARIES})
