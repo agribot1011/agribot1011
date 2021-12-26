@@ -116,10 +116,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(
-# # include
-#   ${catkin_INCLUDE_DIRS}
-# )
+include_directories(
+# include
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -208,9 +208,12 @@ catkin_package(
 
 add_executable(pcl_test src/pcl_test.cpp)
 add_dependencies(pcl_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 target_link_libraries(pcl_test ${catkin_LIBRARIES})
+
 add_executable(xcv src/xcv.cpp)
 add_dependencies(xcv ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 target_link_libraries(xcv ${catkin_LIBRARIES})
+
+add_executable(wall_remove src/wall_remove.cpp)
+add_dependencies(xcv ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(wall_remove ${catkin_LIBRARIES})
