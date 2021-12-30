@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz/Selection
@@ -26,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -141,6 +142,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        basket:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         camera_depth_frame:
           Alpha: 1
           Show Axes: false
@@ -182,7 +188,47 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        hand_link:
+        gripper_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger1_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger1_finger_tip_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger1_inner_knuckle_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger1_knuckle_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger2_finger_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger2_finger_tip_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger2_inner_knuckle_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_finger2_knuckle_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -192,42 +238,27 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        l_finger_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_moment_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_truss_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         laser:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        r_finger_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_moment_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_truss_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         shoulder_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        sjcam_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        tomato_gripper_l:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        tomato_gripper_r:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -267,6 +298,34 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 1.5
+      Size (m): 0.009999999776482582
+      Style: Points
+      Topic: /camera2/depth/points2
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -295,25 +354,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.7774758338928223
+      Distance: 4.401879787445068
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
+      Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 0.8822702765464783
+        Y: -0.7770639657974243
+        Z: 1.9039782285690308
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7053980827331543
+      Pitch: 0.29539793729782104
       Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 0.560397207736969
+      Yaw: 3.1704020500183105
     Saved: ~
 Window Geometry:
   Displays:
@@ -332,4 +391,4 @@ Window Geometry:
     collapsed: false
   Width: 1267
   X: 110
-  Y: 55
+  Y: 27
