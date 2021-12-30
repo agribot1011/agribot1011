@@ -46,8 +46,8 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
     ec.setClusterTolerance (0.01); // 2cm
-    ec.setMinClusterSize (25);
-    ec.setMaxClusterSize (250);
+    ec.setMinClusterSize (15);
+    ec.setMaxClusterSize (150);
     ec.setSearchMethod (tree);
     ec.setInputCloud (cloud);
     ec.extract (cluster_indices);
@@ -92,14 +92,12 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 int
 main (int argc, char** argv)
 {
-    
     // Initialize ROS
     ros::init (argc, argv, "cluster_extraction");
     ros::NodeHandle nh;
 
     // Create a ROS subscriber for the input point cloud
     ros::Subscriber sub = nh.subscribe ("/pcl/points_filtered3", 1, cloud_cb);
-    
 
     // Create a ROS publisher for the output point cloud
     // pub = nh.advertise<sensor_msgs::PointCloud2> ("/pcl_tut/object_cluster", 1);
