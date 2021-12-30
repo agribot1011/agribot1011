@@ -217,3 +217,7 @@ target_link_libraries(xcv ${catkin_LIBRARIES})
 add_executable(wall_remove src/wall_remove.cpp)
 add_dependencies(xcv ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wall_remove ${catkin_LIBRARIES})
+
+add_executable(ec src/ec.cpp)
+add_dependencies(xcv ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(ec ${catkin_LIBRARIES})
